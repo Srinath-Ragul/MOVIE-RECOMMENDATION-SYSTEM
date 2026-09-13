@@ -9,7 +9,6 @@ from sklearn.decomposition import TruncatedSVD
 
 st.set_page_config(page_title="Smart Movie Recommender", page_icon="🎬", layout="wide")
 
-# ---------------- DATA ----------------
 movies = pd.DataFrame([
     [1,"Interstellar","Sci-Fi Space Adventure","space astronaut nasa black hole future survival science"],
     [2,"The Martian","Sci-Fi Space Adventure","mars astronaut space survival nasa science engineering"],
@@ -49,7 +48,6 @@ item_user = user_item.T
 item_similarity = cosine_similarity(item_user)
 item_similarity_df = pd.DataFrame(item_similarity, index=item_user.index, columns=item_user.index)
 
-# Matrix factorization using Truncated SVD
 n_components = min(3, min(user_item.shape) - 1)
 svd = TruncatedSVD(n_components=n_components, random_state=42)
 user_factors = svd.fit_transform(user_item)
@@ -63,7 +61,6 @@ def normalize_scores(series):
     return (s - s.min()) / (s.max() - s.min())
 
 def collaborative_recommend(user_id, n=5):
-    # Combine item-based CF and matrix factorization
     rated = ratings[ratings.user_id == user_id]
     rated_ids = set(rated.movie_id)
 
@@ -112,7 +109,6 @@ def user_content_scores(user_id):
     scores = scores / weights.replace(0, np.nan)
     return scores.fillna(0)
 
-# ---------------- NEURAL CF (CO4) ----------------
 @st.cache_resource
 def train_ncf():
     try:
@@ -158,7 +154,6 @@ def neural_recommend(user_id, n=5):
     preds = model.predict([X_u, X_m], verbose=0).flatten()
     return pd.Series(preds, index=candidates).sort_values(ascending=False).head(n)
 
-# ---------------- HYBRID (CO3) ----------------
 def hybrid_recommend(user_id, n=5):
     cf = collaborative_recommend(user_id, len(movies))
     cb = user_content_scores(user_id)
@@ -172,7 +167,6 @@ def hybrid_recommend(user_id, n=5):
     score.loc[list(rated_ids)] = -1
     return score.sort_values(ascending=False).head(n)
 
-# ---------------- UI ----------------
 st.title("🎬 Smart Movie Recommendation System")
 st.caption("CO1: Collaborative Filtering • CO2: TF-IDF Content Filtering • CO3: Hybrid • CO4: Neural Embeddings")
 
